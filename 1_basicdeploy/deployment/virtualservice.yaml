@@ -1,0 +1,16 @@
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: conductor-vs
+spec:
+  hosts:
+  - "*"
+  gateways:
+  - conductor-gateway
+  http:
+  - route:
+    - destination:
+        host: conductor
+        port:
+          number: 8080
+

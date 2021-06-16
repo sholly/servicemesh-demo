@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: leaf1
+  labels:
+    app: leaf1
+spec:
+  selector:
+    matchLabels:
+      app: leaf1
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: leaf1
+      annotations:
+        sidecar.istio.io/inject: "true"
+    spec:
+      containers:
+        - name: leaf1
+          image: docker.io/sholly/servicemesh-leaf1:1.0
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8080
+          env:
+            - name: SPRING_PROFILES_ACTIVE
+              value: openshift
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: leaf1
+  name: leaf1
+spec:
+  ports:
+    - port: 8080
+      protocol: TCP
+      targetPort: 8080
+  selector:
+    app: leaf1

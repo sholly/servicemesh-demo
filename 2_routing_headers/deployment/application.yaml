@@ -1,0 +1,114 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: leaf1-v10
+  labels:
+    app: leaf1
+    version: v10
+spec:
+  selector:
+    matchLabels:
+      app: leaf1
+      version: v10
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: leaf1
+        version: v10
+      annotations:
+        sidecar.istio.io/inject: "true"
+    spec:
+      containers:
+        - name: leaf1
+          image: docker.io/sholly/servicemesh-leaf1:1.0
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8080
+          env:
+            - name: SPRING_PROFILES_ACTIVE
+              value: openshift
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: leaf1-v11
+  labels:
+    app: leaf1
+    version: v11
+spec:
+  selector:
+    matchLabels:
+      app: leaf1
+      version: v11
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: leaf1
+        version: v11
+      annotations:
+        sidecar.istio.io/inject: "true"
+    spec:
+      containers:
+        - name: leaf1
+          image: docker.io/sholly/servicemesh-leaf1:1.1
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8080
+          env:
+            - name: SPRING_PROFILES_ACTIVE
+              value: openshift
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: leaf1
+  name: leaf1
+spec:
+  ports:
+    - port: 8080
+      protocol: TCP
+      targetPort: 8080
+  selector:
+    app: leaf1
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: Gateway
+metadata:
+  name: leaf1-gateway
+spec:
+  selector:
+    istio: ingressgateway
+  servers:
+    - port:
+        number: 80
+        name: http
+        protocol: HTTP
+      hosts:
+        - "*"
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: leaf1-vs
+spec:
+  hosts:
+    - "*"
+  gateways:
+    - leaf1-gateway
+  http:
+#    - match:
+#        - uri:
+#            prefix: /leaf1
+#      rewrite:
+#        uri: /leaf1
+#      route:
+     - route:
+        - destination:
+            host: leaf1
+            port:
+              number: 8080
+
+

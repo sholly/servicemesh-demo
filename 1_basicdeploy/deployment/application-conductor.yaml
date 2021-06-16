@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: conductor
+  labels:
+    app: conductor
+spec:
+  selector:
+    matchLabels:
+      app: conductor
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: conductor
+      annotations:
+        sidecar.istio.io/inject: "true"
+    spec:
+      containers:
+        - name: conductor
+          image: docker.io/sholly/servicemesh-conductor:1.0
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8080
+          env:
+            - name: SPRING_PROFILES_ACTIVE
+              value: openshift
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: conductor
+  name: conductor
+spec:
+  ports:
+    - port: 8080
+      protocol: TCP
+      targetPort: 8080
+  selector:
+    app: conductor
