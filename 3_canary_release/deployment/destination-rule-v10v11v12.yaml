@@ -1,0 +1,16 @@
+apiVersion: networking.istio.io/v1alpha3
+kind: DestinationRule
+metadata:
+  name: leaf1
+spec:
+  host: leaf1
+  subsets:
+  - name: v10
+    labels:
+      version: v10
+  - name: v11
+    labels:
+      version: v11
+  - name: v12
+    labels:
+      version: v12
