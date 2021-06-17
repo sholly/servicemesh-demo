@@ -174,11 +174,7 @@ spec:
   hosts:
     - leaf2
   http:
-  - fault:
-      delay:
-        percent: 100
-        fixedDelay: 3s
-    route:
+  - route:
     - destination:
         host: leaf2
         port:

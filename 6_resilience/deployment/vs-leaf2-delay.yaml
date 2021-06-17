@@ -9,7 +9,7 @@ spec:
   - fault:
       delay:
         percent: 100
-        fixedDelay: 0.3s
+        fixedDelay: 0.2s
     route:
     - destination:
         host: leaf2

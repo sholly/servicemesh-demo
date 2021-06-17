@@ -6,12 +6,9 @@ spec:
   hosts:
     - leaf1
   http:
-    - fault:
-        delay:
-          percent: 100
-          fixedDelay: 3s
-      route:
+    - route:
         - destination:
             host: leaf1
             port:
               number: 8080
+      timeout: 0.5s
