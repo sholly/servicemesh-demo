@@ -35,8 +35,7 @@ metadata:
 spec:
   ports:
     - port: 8080
-      protocol: TCP
-      targetPort: 8080
+      name: http
   selector:
     app: conductor
 ---
@@ -77,8 +76,7 @@ metadata:
 spec:
   ports:
     - port: 8080
-      protocol: TCP
-      targetPort: 8080
+      name: http
   selector:
     app: leaf1
 ---
@@ -119,8 +117,7 @@ metadata:
 spec:
   ports:
     - port: 8080
-      protocol: TCP
-      targetPort: 8080
+      name: http
   selector:
     app: leaf2
 ---
@@ -149,12 +146,7 @@ spec:
   gateways:
   - conductor-gateway
   http:
-  - match:
-    - uri:
-        prefix: /callleaf12
-    rewrite:
-      uri: /callleaf12
-    route:
+  - route:
     - destination:
         host: conductor
         port:
@@ -182,8 +174,12 @@ spec:
   hosts:
     - leaf2
   http:
-    - route:
-        - destination:
-            host: leaf2
-            port:
-              number: 8080
+  - fault:
+      delay:
+        percent: 100
+        fixedDelay: 3s
+    route:
+    - destination:
+        host: leaf2
+        port:
+          number: 8080

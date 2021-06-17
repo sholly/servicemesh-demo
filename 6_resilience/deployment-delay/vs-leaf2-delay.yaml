@@ -6,12 +6,12 @@ spec:
   hosts:
     - leaf2
   http:
-    - fault:
-        delay:
-          percent: 100
-          fixedDelay: 3s
-      route:
-        - destination:
-            host: leaf2
-            port:
-              number: 8080
+  - fault:
+      delay:
+        percent: 100
+        fixedDelay: 0.3s
+    route:
+    - destination:
+        host: leaf2
+        port:
+          number: 8080
