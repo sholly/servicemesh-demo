@@ -115,6 +115,8 @@ Edit the VirtualService to inject delays:
 
 Now, ~40% of the calls will be delayed by ~800ms.
 
+## 6. Resilience
 
+create servicemesh-resilience project
 
 
