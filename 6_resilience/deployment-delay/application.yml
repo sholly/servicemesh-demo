@@ -154,7 +154,7 @@ spec:
         prefix: /callleaf12
     rewrite:
       uri: /callleaf12
-  - route:
+    route:
     - destination:
         host: conductor
         port:
