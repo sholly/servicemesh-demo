@@ -38,9 +38,9 @@ run curl-with-headers, this will give us v10
 
 Create project servicemesh-canaryrelease
 
-apply the application.yaml
+`oc apply -f application.yaml`
 
-apply the destination-rule-v10v11.yaml
+`oc apply -f destination-rule-v10v11.yaml`
 
 Run gentraffic. We have v11, v12, v13 versions defined, but destination-rule-v10v11.yaml only routes 
 traffic to v11 and v12
@@ -71,6 +71,50 @@ Run gentraffic again, note that 100% of traffic is going to v11 now.
 
 ## 4: Mirror releases
 
-Now we'll mirror traffic. 
+Create project and app
 
 `oc new-project servicemesh-mirror`
+
+`oc apply -f deployments/application.yaml`
+
+When app is deployed, 
+run ./gentraffic in on term
+run ./watchlogs in other
+
+
+Note how traffic is going to v10 only
+
+now apply destination rule and virtual service
+
+```shell
+oc apply -f deployment/destination-rule-v10-v11.yaml 
+oc apply -f deployment/virtualservice-mirror.yaml
+```
+
+Keep watching 
+
+## 5: Errors and Delays
+
+Create a project and application:
+
+`oc new-project servicemesh-errorsdelays`
+
+`oc apply -f deployment/application.yaml`
+
+Run ./gentraffic.sh to see normal traffic.
+
+Now edit the VirtualService to inject faults:
+
+`oc replace -f deployment/virtualservice-error.yaml`
+
+Run ./gentraffic.sh, note that ~50% of the calls will fail. 
+
+Edit the VirtualService to inject delays:
+
+`oc replace -f deployment/virtualservice-delay.yaml`
+
+Now, ~40% of the calls will be delayed by ~800ms.
+
+
+
+
