@@ -68,7 +68,8 @@ metadata:
   name: leaf1
 spec:
   ports:
-    - port: 8080
+    - name: http
+      port: 8080
       protocol: TCP
       targetPort: 8080
   selector:
@@ -93,27 +94,30 @@ apiVersion: networking.istio.io/v1alpha3
 kind: VirtualService
 metadata:
   name: leaf1-vs
+  labels:
+    kiali_wizard: weighted_routing
 spec:
   hosts:
-    - "*"
+  - "*"
   gateways:
-    - leaf1-gateway
+  - leaf1-gateway
   http:
-     - route:
-        - destination:
-            host: leaf1
-            subset: v1
-            port:
-              number: 8080
+  - route:
+    - destination:
+        host: leaf1
+        subset: v10
+        port:
+          number: 8080
 ---
 apiVersion: networking.istio.io/v1alpha3
 kind: DestinationRule
 metadata:
   name: leaf1
+  labels:
+    kiali_wizard: weighted_routing
 spec:
   host: leaf1
   subsets:
-    - name: v10
-      labels:
-        version: v10
-
+  - name: v10
+    labels:
+      version: v10

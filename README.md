@@ -1,5 +1,5 @@
 Service Mesh Demo
-## Basic Demo
+## 1: Basic Demo
 
 create project servicemesh-basicdeploy
 
@@ -12,7 +12,7 @@ open kiali
 run gentraffic12 to see flow conductor -> leaf1 -> leaf2
 run gentraffic21 to see flow conductor -> leaf2 -> leaf1
 
-## Routing Traffic based on Headers
+## 2: Routing Traffic based on Headers
 
 oc new-project servicemesh-headers
 
@@ -34,7 +34,7 @@ Now apply virtual-service-with-header-subsets.yaml
 run curl-no-headers.sh, this gives us v11
 run curl-with-headers, this will give us v10
 
-## Canary releases with Service Mesh
+## 3: Canary releases with Service Mesh
 
 Create project servicemesh-canaryrelease
 
@@ -68,3 +68,9 @@ Let's say there is a problem with both v11 and v12,
 Change the routing to 100% v11.
 
 Run gentraffic again, note that 100% of traffic is going to v11 now. 
+
+## 4: Mirror releases
+
+Now we'll mirror traffic. 
+
+`oc new-project servicemesh-mirror`
