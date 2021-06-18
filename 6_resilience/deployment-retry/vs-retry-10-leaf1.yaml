@@ -1,0 +1,17 @@
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: leaf1-vs
+spec:
+  hosts:
+  - leaf1
+  http:
+  - route:
+    - destination:
+        host: leaf1
+        port:
+          number: 8080
+    retries:
+      attempts: 10
+      perTryTimeout: 1s
+      retryOn: 5xx

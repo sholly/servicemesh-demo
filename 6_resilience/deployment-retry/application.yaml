@@ -1,0 +1,186 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: conductor
+  labels:
+    app: conductor
+spec:
+  selector:
+    matchLabels:
+      app: conductor
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: conductor
+      annotations:
+        sidecar.istio.io/inject: "true"
+    spec:
+      containers:
+        - name: conductor
+          image: docker.io/sholly/servicemesh-conductor:1.0
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8080
+          env:
+            - name: SPRING_PROFILES_ACTIVE
+              value: openshift
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: conductor
+  name: conductor
+spec:
+  ports:
+    - port: 8080
+      name: http
+  selector:
+    app: conductor
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: leaf1
+  labels:
+    app: leaf1
+spec:
+  selector:
+    matchLabels:
+      app: leaf1
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: leaf1
+      annotations:
+        sidecar.istio.io/inject: "true"
+    spec:
+      containers:
+        - name: leaf1
+          image: docker.io/sholly/servicemesh-leaf1:1.0
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8080
+          env:
+            - name: SPRING_PROFILES_ACTIVE
+              value: openshift
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: leaf1
+  name: leaf1
+spec:
+  ports:
+    - port: 8080
+      name: http
+  selector:
+    app: leaf1
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: leaf2
+  labels:
+    app: leaf2
+spec:
+  selector:
+    matchLabels:
+      app: leaf2
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: leaf2
+      annotations:
+        sidecar.istio.io/inject: "true"
+    spec:
+      containers:
+        - name: leaf2
+          image: docker.io/sholly/servicemesh-leaf2:1.0
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8080
+          env:
+            - name: SPRING_PROFILES_ACTIVE
+              value: openshift
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: leaf2
+  name: leaf2
+spec:
+  ports:
+    - port: 8080
+      name: http
+  selector:
+    app: leaf2
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: Gateway
+metadata:
+  name: conductor-gateway
+spec:
+  selector:
+    istio: ingressgateway
+  servers:
+  - port:
+      number: 80
+      name: http
+      protocol: HTTP
+    hosts:
+    - "*"
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: conductor-vs
+spec:
+  hosts:
+  - "*"
+  gateways:
+  - conductor-gateway
+  http:
+  - route:
+    - destination:
+        host: conductor
+        port:
+          number: 8080
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: leaf1-vs
+spec:
+  hosts:
+    - leaf1
+  http:
+    - route:
+        - destination:
+            host: leaf1
+            port:
+              number: 8080
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: leaf2-vs
+spec:
+  hosts:
+    - leaf2
+  http:
+  - fault:
+      abort:
+        percentage:
+          value: 90
+        httpStatus: 500
+    route:
+    - destination:
+        host: leaf2
+        port:
+          number: 8080
