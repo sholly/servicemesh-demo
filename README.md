@@ -204,3 +204,33 @@ or run ./create_serviceaccounts.sh
 Check the status of TLS on the pods: 
 
 `istioctl x authz check $CONDUCTOR_POD`
+
+
+##9 Service to Service Authorization
+
+Create projects: 
+servicemesh-authc
+servicemesh-curl
+
+Add to smmr
+
+Create application:
+this includes a destination rule and peerauthentication for strict tls
+oc apply -f deployments/application.yaml
+
+switch to servicemesh-curl pod. 
+
+oc apply -f deployments/sleep.yml
+
+
+Check that we can talk to the conductor pod across namespaces: 
+oc exec $(oc get pods -o name -n servicemesh-sleep) -- curl -s conductor.servicemesh-authc.svc.cluster.local:8080/callleaf12
+
+We should now get access denied.  
+Apply the AuthorizationPolicy:
+
+oc apply -f deployment/conductor-policy.yaml
+
+WAIT 20-30 seconds before checking access again: 
+
+oc exec $(oc get pods -o name -n servicemesh-sleep) -- curl -s conductor.servicemesh-authc.svc.cluster.local:8080/callleaf12
