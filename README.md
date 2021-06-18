@@ -117,6 +117,59 @@ Now, ~40% of the calls will be delayed by ~800ms.
 
 ## 6. Resilience
 
+### Timeouts
 create servicemesh-resilience project
+
+add to servicemesh
+
+deploy application 
+`oc apply -f deployment-timeout/application.yaml`
+
+run response-times.sh, observe normal flow
+
+Set 2s delay on leaf2
+
+`oc apply -f deployment-timeout/vs-leaf2-delay.yaml`
+
+run response-times.sh, observe 2s delay
+
+Set timeout on leaf1, rerun response-times, observe the error
+`oc apply -f deployment/vs-timeout-leaf1.yaml`
+
+remove timeout 
+`oc apply -f deployment/vs-removedelay-leaf1.yaml`
+
+### Retries
+
+Update the application such that leaf2 times out with 500's 90% of the time: 
+`oc apply -f deployment-retry/application.yaml`
+
+## 7. Circuit Breaker
+
+create project servicemesh-circuitbreak
+
+oc apply -f deployment/application.yaml
+
+This is the vertx-greet svc, which will only allow 2 connections per second.  
+
+run parallel script , note how we receive 503 after 1-2 calls.  
+
+Add a connection pool to reduce connections allowed to service. 
+
+`oc apply -f deployment/dr-connection-pool.yaml`
+
+Run parallel again, note upstream connection errors. 
+
+Create v2 deployment, which does not have connection limits.
+
+`oc create -f deployment/deployment-v2.yaml`
+
+run parallel again, verify v2 pod. 
+
+
+Reconfigure the destination rule as a circuit breaker: 
+`oc apply -f deployment/dr-outlier-detection.yaml`
+
+Now run sequential, verify that v1 drops out. 
 
 

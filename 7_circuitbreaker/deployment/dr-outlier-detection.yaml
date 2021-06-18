@@ -1,0 +1,12 @@
+apiVersion: networking.istio.io/v1alpha3
+kind: DestinationRule
+metadata:
+  name: vertx-greet
+spec:
+  host: vertx-greet
+  trafficPolicy:
+    outlierDetection:
+      baseEjectionTime: 10.000s
+      consecutiveErrors: 2
+      interval: 2.000s
+      maxEjectionPercent: 100
