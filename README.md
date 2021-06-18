@@ -172,4 +172,35 @@ Reconfigure the destination rule as a circuit breaker:
 
 Now run sequential, verify that v1 drops out. 
 
+## 8. Security - mTLS
 
+For this demo, make sure we're using Istio 1.6.x!!!!
+
+`oc create -f servicemesh-mtls`
+
+Create conductor, leaf1, leaf2
+
+`oc apply -f deployment/application.yaml`
+
+Apply the PeerAuthentication security policy:
+`oc apply -f peerauthentication.yaml`
+
+
+Apply the destinationRule applying TLS:
+`oc apply -f destinationrule.yaml`
+
+Create service accounts for the apps, and attach them to the deployments: 
+```shell
+oc create serviceaccount conductor
+oc create serviceaccount leaf1
+oc create serviceaccount leaf2
+oc set serviceaccount deployment conductor conductor
+oc set serviceaccount deployment leaf1 leaf1
+oc set serviceaccount deployment leaf2 leaf2
+```
+or run ./create_serviceaccounts.sh
+
+
+Check the status of TLS on the pods: 
+
+`istioctl x authz check $CONDUCTOR_POD`
