@@ -1,4 +1,4 @@
-Service Mesh Demo
+# Service Mesh Demo
 
 This is a demo of most of the major features of Openshift Service Mesh.  
 We use several different microservices to explore the features of service mesh: 
