@@ -99,12 +99,6 @@ spec:
   gateways:
     - leaf1-gateway
   http:
-#    - match:
-#        - uri:
-#            prefix: /leaf1
-#      rewrite:
-#        uri: /leaf1
-#      route:
      - route:
         - destination:
             host: leaf1
