@@ -18,10 +18,17 @@ spec:
     spec:
       containers:
         - name: leaf2
-          image: docker.io/sholly/servicemesh-leaf2:1.0
+          image: docker.io/sholly/servicemesh-leaf2:jaeger
           imagePullPolicy: Always
           ports:
             - containerPort: 8080
+              name: http
+            - containerPort: 8778
+              name: jolokia
+              protocol: TCP
+            - containerPort: 9779
+              name: prometheus
+              protocol: TCP
           env:
             - name: SPRING_PROFILES_ACTIVE
               value: openshift

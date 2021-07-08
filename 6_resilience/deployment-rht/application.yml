@@ -195,6 +195,7 @@ spec:
             host: preference
             port:
               number: 8080
+              protocol: HTTP
 ---
 apiVersion: networking.istio.io/v1alpha3
 kind: VirtualService
