@@ -1,0 +1,13 @@
+apiVersion: networking.istio.io/v1beta1
+kind: ServiceEntry
+metadata:
+  name: tododb-meshexternal
+spec:
+  hosts:
+  - dockerlab.lab.unixnerd.org
+  ports:
+  - name: tcp-5432
+    number: 5432
+    protocol: tcp
+  resolution: DNS
+  location: MESH_EXTERNAL

@@ -176,7 +176,7 @@ This is the vertx-greet svc, which will only allow 2 connections per second.
 
 run the parallel.sh script , note how we receive a 503 error after 1-2 calls.  
 
-Add a connection pool to reduce connections allowed to service. 
+Add a connection pool to reduce connections allowed to the service. 
 
 `oc apply -f deployment/dr-connection-pool.yaml`
 
@@ -209,6 +209,12 @@ Create the project  servicemesh-mtls, and add it to Service Mesh Member Roll.
 Deploy the conductor, leaf1, leaf2 applications.
 
 `oc apply -f deployment/application.yaml`
+Service Mesh mTLS has two different policies: 
+
+PERMISSIVE, set by default, will still allow unencrypted traffic into and out of the mesh. 
+
+STRICT, which will require mTLS for ALL applications in the service mesh.  
+
 
 Before applying the PeerAuthentication and DestinationRule, check that the mTLS policy is set to PERMISSIVE.  Note that 
 in Service mesh 2.0, istioctl does not give us pod names that have mTLS policy attached. 
@@ -240,7 +246,7 @@ Check the status of TLS on the pods:
 
 We should now see 'STRICT' mTLS policy applied. 
 
-##9 Service to Service Authorization
+## 9 Service to Service Authorization
 
 Create two projects: 
 servicemesh-authc
@@ -278,3 +284,57 @@ WAIT 20-30 seconds before checking access again:
 oc exec $(oc get pods -o name -n servicemesh-sleep) -- curl -s conductor.servicemesh-authc.svc.cluster.local:8080/callleaf12
 
 We should now be allowed to call conductor from the servicemesh-curl namespace again. 
+
+## Connecting to external services
+
+Service Mesh allows us to completely control egress traffic.  
+
+By default, the mesh allows all egress traffic.  Examine the defaults by editing the 'istio-basic' ConfigMap: 
+
+`oc -n istio-system edit cm istio-basic` (Assuming default installation): 
+
+```
+    outboundTrafficPolicy:
+      mode: ALLOW_ANY
+```
+If we want to lock it down, we would change the outboundTrafficPolicy to REGISTRY_ONLY: 
+
+```
+    outboundTrafficPolicy:
+      mode: REGISTRY_ONLY
+```
+
+For this example, we use a database deployed on an external server.  The directory '10_external_services/external_database' has a script and a database init script that can be deployed via Docker on an external server running Docker.  
+
+With the database deployed, edit the ConfigMap in '10_external_services/deploy-servicemesh-db-externalservice-application', and change the spring.datasource.url to point to the host with the todo database deployed.  
+
+With the ConfigMap updated, deploy the application:
+
+`oc apply -f 10_external_services/deploy-servicemesh-db-externalservice-application/`
+
+Our app should be working as expected, given that our service mesh is allowing egress traffic by default. 
+
+If we change the outboundTrafficPolicy to REGISTRY_ONLY, our app should fail.  
+
+Next, change the hostname in '10_external_services/deploy-servicemesh-db-externalservice-serviceentry/serviceentry-tododb-external.yaml' to match the host for your database, then apply the Service Entry: 
+
+`oc apply -f 10_external_services/deploy-servicemesh-db-externalservice-serviceentry/serviceentry-tododb-external.yaml`
+
+```yaml
+apiVersion: networking.istio.io/v1beta1
+kind: ServiceEntry
+metadata:
+  name: tododb-meshexternal
+spec:
+  hosts:
+  - dockerlab.lab.unixnerd.org
+  ports:
+  - name: tcp-5432
+    number: 5432
+    protocol: tcp
+  resolution: DNS
+  location: MESH_EXTERNAL
+```
+
+Our app should work again, given that we've specifically allowed traffic to the host with the database. 
+
