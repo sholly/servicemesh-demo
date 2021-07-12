@@ -8,21 +8,21 @@ We use several different microservices to explore the features of service mesh:
 3.  https://github.com/sholly/servicemesh-leaf2
 4.  https://github.com/sholly/vertx-greet
 
-Conductor acts as an extremely simple API gateway.  It has endpoints to call itself only, 
+Conductor acts as an extremely simple API gateway.  It has various endpoints to call itself only, 
 
 '/callleaf12' to call conductor -> leaf1 -> leaf2
 
 and 
 '/callleaf21' to call conductor -> leaf2 -> leaf1
 
-Leaf1 and leaf2 are similar in that they have standalone endpoints, as well as endpoints for calling each other, to 
+Leaf1 and leaf2 are similar in that they have standalone endpoints, "/leaf1" and "/leaf2", as well as the endpoints for calling each other, to 
 simulate traffice flow. 
 
 It is advised to create a separate project for each section and add it to the Service mesh Member Roll.
 
 When done with a section, delete the project, then delete that project from the Service Mesh Member Roll.
 
-Adding projects to the Service Mesh Member Roll: 
+## Adding projects to the Service Mesh Member Roll: 
 
 In the openshift console, select the project where Service Mesh is installed.  This should be 'istio-system' unless it 
 was installed elsewhere. Then select 'Operators -> Installed Operators'.  Click on Red Hat Openshift Service Mesh.
@@ -80,7 +80,7 @@ Create project servicemesh-canaryrelease and add it to the Service mesh member r
 
 `oc apply -f destination-rule-v10v11v12.yaml`
 
-Run gentraffic.sh. We have v11, v12, v13 versions defined, we should see an even split between v10, v11, and v12. 
+Run gentraffic.sh. We have v10, v11, v12 versions defined, we should see an even split between v10, v11, and v12. 
 
 Now lets perform our 'canary release'. 
 
@@ -89,7 +89,8 @@ Apply virtualservice-v10-80-v11-20.yaml.  This will route 80% of the traffic to 
 Run gentraffic again to see the updated traffic. 
 
 
-Apply virtualservice-v10-45-v11-45-v12-10.yaml.  This does 45% -> v10, 45% -> v11, and 10% -> v12.  
+Apply virtualservice-v10-45-v11-45-v12-10.yaml.  This routes 45% of traffic to v10, 45% of traffic to v11, 
+and 10% of traffic to v12.  
 
 run gentraffic again, observe the traffic split.  
 
@@ -144,7 +145,9 @@ Now, ~40% of the calls will be delayed by ~800ms.
 
 
 ### Timeouts
-create the servicemesh-resilience project, add it to the Service Mesh member roll, and deploy the application. 
+
+Create the servicemesh-resilience project, add it to the Service Mesh member roll, and deploy the application. 
+
 `oc apply -f deployment-timeout/application.yaml`
 
 Run response-times.sh, observe the normal traffic flow
@@ -153,30 +156,32 @@ Now, let's set a 2 second delay on leaf2:
 
 `oc apply -f deployment-timeout/vs-leaf2-delay.yaml`
 
-run the response-times.sh, note we've introduced approximately a 2 second delay
+Now run the response-times.sh, note we've introduced approximately a 2 second delay
 
 Set timeout on leaf1.  The timeout is less than the delay in leaf2, so the call should fail. 
+
 `oc apply -f deployment/vs-timeout-leaf1.yaml`
 
-Run response-times.sh note the call failure
-remove timeout 
+Now run response-times.sh, and note the call failures. 
+Now remove the timeout 
+
 `oc apply -f deployment/vs-removedelay-leaf1.yaml`
 
-Run response-times.sh again.  
+Run response-times.sh again.    
 
 ### Retries
 
 ## 7. Circuit Breaker
 
-Create the project servicemesh-circuitbreak, add to the Service Mesh Member Roll, and deploy the application. 
+Create the project servicemesh-circuitbreak, then add it to the Service Mesh Member Roll, and deploy the application. 
 
 `oc apply -f deployment/application.yaml`
 
-This is the vertx-greet svc, which will only allow 2 connections per second.  
+For this exercise, we're using the vertx-greet svc, which will only allow 2 connections per second.  
 
-run the parallel.sh script , note how we receive a 503 error after 1-2 calls.  
+Run the parallel.sh script , note how we receive a 503 error after 1-2 calls.  
 
-Add a connection pool to reduce connections allowed to the service. 
+Now add a connection pool to reduce connections allowed to the service. 
 
 `oc apply -f deployment/dr-connection-pool.yaml`
 
@@ -189,10 +194,11 @@ Create v2 deployment, which does not have connection limits, and has a message d
 run parallel again, verify the v2 pod is accepting traffic. 
 
 
-Reconfigure the destination rule as a circuit breaker: 
+Reconfigure the destination rule as a circuit breaker by applying a DestinationRule that performs outlier detection: 
+
 `oc apply -f deployment/dr-outlier-detection.yaml`
 
-Now run sequential, and verify that v1 is evicted, while v2 still accepts traffic.  
+Now run ./sequential.sh, and verify that v1 is evicted, while v2 still accepts traffic.  
 
 Wait ten seconds, and run ./sequential.sh again.  Note that v1 is allowed to accept traffic again, if only for a short 
 period. 
@@ -209,6 +215,7 @@ Create the project  servicemesh-mtls, and add it to Service Mesh Member Roll.
 Deploy the conductor, leaf1, leaf2 applications.
 
 `oc apply -f deployment/application.yaml`
+
 Service Mesh mTLS has two different policies: 
 
 PERMISSIVE, set by default, will still allow unencrypted traffic into and out of the mesh. 
@@ -222,13 +229,16 @@ in Service mesh 2.0, istioctl does not give us pod names that have mTLS policy a
 `istioctl x authz check $CONDUCTOR_POD_NAME`
 
 Apply the PeerAuthentication security policy:
+
 `oc apply -f peerauthentication.yaml`
 
 
 Apply the destinationRule applying TLS:
+
 `oc apply -f destinationrule.yaml`
 
 Create service accounts for the apps, and attach them to the deployments: 
+
 ```shell
 oc create serviceaccount conductor
 oc create serviceaccount leaf1
@@ -274,7 +284,10 @@ Apply conductor-policy.yaml.
 
 After 20-40 seconds, this should restrict traffic to the conductor application to ONLY the istio-ingressgateway.  
 
-Run `oc exec $(oc get pods -o name -n servicemesh-curl) -- curl -s conductor.servicemesh-authc.svc.cluster.local:8080/callleaf12`
+Run 
+
+`oc exec $(oc get pods -o name -n servicemesh-curl) -- curl -s conductor.servicemesh-authc.svc.cluster.local:8080/callleaf12`
+
 We should now get access denied.  
 
 
